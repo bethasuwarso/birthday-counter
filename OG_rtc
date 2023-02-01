@@ -1,39 +1,152 @@
+#include <RTClib.h>
 #include <Wire.h>
-#include <ds3231.h>
- 
-struct ts t; 
- 
+#include <stdio.h>
+
+
+int daysInMonth[12] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };  // 2020 WAS A LEAP YEAR CHANGE FEB TO 28 if not leap year
+int daycount[] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+
+int targetDay = 29;     //My Cake day is 5,
+int targetMonth = 1;    //My Cake month is 7,
+int targetYear = 2023;  //Set year to this year
+int nowdaynumber;
+int TargetNumber;
+int daysToTarget;
+
+int d;
+int n;
+
+int i = 0;
+int wd;
+
+int setRTC = 0;
+
+RTC_DS1307 RTC;
+
+const int ledPin1 = 2;
+const int ledPin2 = 3;
+const int ledPin3 = 4;
+const int ledPin4 = 5;
+const int ledPin5 = 6;
+
+
 void setup() {
   Serial.begin(9600);
+
   Wire.begin();
-  DS3231_init(DS3231_CONTROL_INTCN);
-  /*----------------------------------------------------------------------------
-  In order to synchronise your clock module, insert timetable values below !
-  ----------------------------------------------------------------------------*/
-  t.hour=12; 
-  t.min=30;
-  t.sec=0;
-  t.mday=25;
-  t.mon=12;
-  t.year=2019;
- 
-  DS3231_set(t); 
+  RTC.begin();
+
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(ledPin3, OUTPUT);
+  pinMode(ledPin4, OUTPUT);
+  pinMode(ledPin5, OUTPUT);
+
+
+
+  if (!RTC.isrunning() || setRTC == 1) {
+    Serial.println("RTC is NOT running!");
+    //  following line sets the RTC to the date &amp; time this sketch was compiled
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+  }
 }
- 
+
 void loop() {
-  DS3231_get(&t);
-  Serial.print("Date : ");
-  Serial.print(t.mday);
-  Serial.print("/");
-  Serial.print(t.mon);
-  Serial.print("/");
-  Serial.print(t.year);
-  Serial.print("\t Hour : ");
-  Serial.print(t.hour);
-  Serial.print(":");
-  Serial.print(t.min);
-  Serial.print(".");
-  Serial.println(t.sec);
- 
+  DateTime now = RTC.now();
+
+  int d = targetMonth;
+  int TargetNumber = daycount[d - 1] + targetDay;
+  //Serial.println(TargetNumber);
+
+  int n = now.month();
+  int nowdaynumber = daycount[n - 1] + now.day();
+  //Serial.println(nowdaynumber);
+
+
+
+  if (TargetNumber < nowdaynumber) {
+
+    daysToTarget = 365 - (nowdaynumber - TargetNumber);
+
+    Serial.print("Next Year ");
+    Serial.print("Days To CakeDay: ");
+    Serial.println(daysToTarget);
+    //Serial.println(TargetNumber);
+
+
+  }
+
+
+  else {
+    daysToTarget = TargetNumber - nowdaynumber;
+    Serial.print("This Year ");
+
+    Serial.print("Days To CakeDay: ");
+    Serial.println(daysToTarget);
+  }
+
+
+
+  if (daysToTarget < 0) {
+    targetYear++;
+    Serial.print("resetting year");
+    Serial.println(targetYear);
+  }
+
+
+  if (daysToTarget <= 30 && daysToTarget > 7) {
+    digitalWrite(ledPin1, HIGH);
+    digitalWrite(ledPin2, LOW);
+    digitalWrite(ledPin3, LOW);
+    digitalWrite(ledPin4, LOW);
+    digitalWrite(ledPin5, LOW);
+  } else if (daysToTarget <= 7 && daysToTarget > 3) {
+    digitalWrite(ledPin1, HIGH);
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, LOW);
+    digitalWrite(ledPin4, LOW);
+    digitalWrite(ledPin5, LOW);
+  } else if (daysToTarget <= 3 && daysToTarget > 1){
+    digitalWrite(ledPin1, HIGH);
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, HIGH);
+    digitalWrite(ledPin4, LOW);
+    digitalWrite(ledPin5, LOW);
+  } else if (daysToTarget == 1){
+    digitalWrite(ledPin1, HIGH);
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, HIGH);
+    digitalWrite(ledPin4, HIGH);
+    digitalWrite(ledPin5, LOW);
+  } else if (daysToTarget <= 0){
+    digitalWrite(ledPin1, HIGH);
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, HIGH);
+    digitalWrite(ledPin4, HIGH);
+    digitalWrite(ledPin5, HIGH);
+  }else{
+    digitalWrite(ledPin1, LOW);
+    digitalWrite(ledPin2, LOW);
+    digitalWrite(ledPin3, LOW);
+    digitalWrite(ledPin4, LOW);
+    digitalWrite(ledPin5, LOW);
+  }
+  
+
+
+  //delay(50);
+  Serial.print(now.year(), DEC);
+  Serial.print('/');
+  Serial.print(now.month(), DEC);
+  Serial.print('/');
+  Serial.print(now.day(), DEC);
+  Serial.print(' ');
+  Serial.print(now.hour(), DEC);
+  Serial.print(':');
+  Serial.print(now.minute(), DEC);
+  Serial.print(':');
+  Serial.print(now.second(), DEC);
+  Serial.println();
+  //Serial.println();
   delay(1000);
 }
